@@ -1,4 +1,3 @@
-
 '''
 #Example script to generate text from Nietzsche's writings.
 

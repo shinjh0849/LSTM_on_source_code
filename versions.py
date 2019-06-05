@@ -20,11 +20,18 @@ print('sklearn: %s' % sklearn.__version__)
 import theano
 print('theano: %s' % theano.__version__)
 # tensorflow
-import tensorflow
-print('tensorflow: %s' % tensorfflow.__version__)
+import tensorflow as tf
+print('tensorflow: %s' % tf.__version__)
 # keras
 import keras
 print('keras: %s' % keras.__version__)
 
-from tensorflow.python.client import device_lib
-print(device_lib.list_local_devices())
+sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+
+with tf.device('/gpu:0'):
+    a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a')
+    b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b')
+    c = tf.matmul(a, b)
+
+with tf.Session() as sess:
+    print(sess.run(c))

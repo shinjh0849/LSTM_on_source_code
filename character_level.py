@@ -80,69 +80,69 @@ def on_epoch_end(epoch, _):
         print()
         F_OUT.write('\n')
 
-# with tf.device('/gpu:0'):
+with tf.device('/gpu:0'):
 
-with open('./numpy_ascii.txt', encoding='utf-8') as f:
-    text = f.read().lower()
+    with open('./numpy_ascii.txt', encoding='utf-8') as f:
+        text = f.read().lower()
     
-print('text length:', len(text))
-print('first 100:', text[:50])
+    print('text length:', len(text))
+    print('first 100:', text[:50])
 
-#   path = get_file(
-#       'nietzsche.txt',
-#       origin='https://s3.amazonaws.com/text-datasets/nietzsche.txt')
-#   with io.open(path, encoding='utf-8') as f:
-#       text = f.read().lower()
+    #   path = get_file(
+    #       'nietzsche.txt',
+    #       origin='https://s3.amazonaws.com/text-datasets/nietzsche.txt')
+    #   with io.open(path, encoding='utf-8') as f:
+    #       text = f.read().lower()
 
-print(len(text))
+    print(len(text))
 
-chars = sorted(list(set(text)))
-print('total chars:', len(chars))
-print(chars)
-char_indices = dict((c, i) for i, c in enumerate(chars))
-indices_char = dict((i, c) for i, c in enumerate(chars))
+    chars = sorted(list(set(text)))
+    print('total chars:', len(chars))
+    print(chars)
+    char_indices = dict((c, i) for i, c in enumerate(chars))
+    indices_char = dict((i, c) for i, c in enumerate(chars))
 
-# cut the text in semi-redundant sequences of maxlen characters
-maxlen = 40
-step = 1
-sentences = []
-next_chars = []
-for i in range(0, len(text) - maxlen, step):
-    sentences.append(text[i: i + maxlen])
-    next_chars.append(text[i + maxlen])
-print('sentences:', len(sentences))
+    # cut the text in semi-redundant sequences of maxlen characters
+    maxlen = 40
+    step = 1
+    sentences = []
+    next_chars = []
+    for i in range(0, len(text) - maxlen, step):
+        sentences.append(text[i: i + maxlen])
+        next_chars.append(text[i + maxlen])
+    print('sentences:', len(sentences))
 
-print('Vectorization...')
-x = np.zeros((len(sentences), maxlen, len(chars)), dtype=np.bool)
-print(x.shape)
-y = np.zeros((len(sentences), len(chars)), dtype=np.bool)
-print(y.shape)
-for i, sentence in enumerate(sentences):
-    for t, char in enumerate(sentence):
-        x[i, t, char_indices[char]] = 1
-    y[i, char_indices[next_chars[i]]] = 1
-
-
-# build the model: a single LSTM
-print('Build model...')
-model = Sequential()
-# model.add(CuDNNLSTM(128, input_shape=(maxlen, len(chars))))
-model.add(LSTM(128, input_shape=(maxlen, len(chars))))
-model.add(Dense(len(chars), activation='softmax'))
-
-optimizer = RMSprop(lr=0.01)
-model.compile(loss='categorical_crossentropy', optimizer=optimizer)
+    print('Vectorization...')
+    x = np.zeros((len(sentences), maxlen, len(chars)), dtype=np.bool)
+    print(x.shape)
+    y = np.zeros((len(sentences), len(chars)), dtype=np.bool)
+    print(y.shape)
+    for i, sentence in enumerate(sentences):
+        for t, char in enumerate(sentence):
+            x[i, t, char_indices[char]] = 1
+        y[i, char_indices[next_chars[i]]] = 1
 
 
+    # build the model: a single LSTM
+    print('Build model...')
+    model = Sequential()
+    model.add(CuDNNLSTM(128, input_shape=(maxlen, len(chars))))
+    # model.add(LSTM(128, input_shape=(maxlen, len(chars))))
+    model.add(Dense(len(chars), activation='softmax'))
+
+    optimizer = RMSprop(lr=0.01)
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer)
 
 
-print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
 
-model.fit(x, y,
-        batch_size=128,
-        epochs=20,
-        callbacks=[print_callback])
 
-F_OUT.close()
+    print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
 
-print('done!')
+    model.fit(x, y,
+            batch_size=128,
+            epochs=20,
+            callbacks=[print_callback])
+
+    F_OUT.close()
+
+    print('done!')
